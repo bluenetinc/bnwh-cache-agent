@@ -13,12 +13,12 @@
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
 │   DATE        : 5.28.2019 				               		     			    │ 
 │   AUTHOR      : Paul Drangeid 			                   				    │ 
-│   SITE        : https://github.com/pdrangeid/bnwh-cache-agent                               │ 
+│   SITE        : https://github.com/bluenetinc/bnwh-cache-agent                               │ 
 └─────────────────────────────────────────────────────────────────────────────────────────────┘ 
 #> 
 
 $companyname="Blue Net Inc"
-$reporoot="https://raw.githubusercontent.com/pdrangeid"
+$reporoot="https://raw.githubusercontent.com/bluenetinc"
 $path = $("$Env:Programfiles\$companyname")
 $localtz=Get-TimeZone | Select Id -ExpandProperty Id
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -118,18 +118,18 @@ If(!(test-path $path))
       New-Item -ItemType Directory -Force -Path $path
 }
 
-$rpath = "pdrangeid/n4j-pswrapper"
+$rpath = "bluenetinc/n4j-pswrapper"
 $rfile = "set-n4jcredentials.ps1"
 $lfile = "C:\Program Files\Blue Net Inc\Caching Agent\set-n4jcredentials.ps1"
 
 get-updatedgitfile $rpath $rfile $lfile
-$rpath = "pdrangeid/bnwh-cache-agent"
+$rpath = "bluenetinc/bnwh-cache-agent"
 
 get-updatedgitfile $rpath "get-datawarehouse-cache.ps1" "$path\get-datawarehouse-cache.ps1"
 get-updatedgitfile $rpath "get-vmware-data.ps1" "$path\get-vmware-data.ps1"
 get-updatedgitfile $rpath "update-bncacheagent.ps1" "$path\update-bncacheagent.ps1"
 get-updatedgitfile $rpath "get-dns.ps1" "$path\get-dns.ps1"
-$rpath = "pdrangeid/graph-commit"
+$rpath = "bluenetinc/graph-commit"
 get-updatedgitfile $rpath "bg-sharedfunctions.ps1" "$path\bg-sharedfunctions.ps1"
 
 exit
