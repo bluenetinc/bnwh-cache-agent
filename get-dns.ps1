@@ -80,7 +80,6 @@ CATCH {
                 Copy-Item -Path $sfile -Destination $dfile
                 Set-Location $env:temp
                 Invoke-Expression "& `"$dfile`" "
-
         }
         if ($answer -eq $true){
         Add-WindowsFeature RSAT-DNS-Server
