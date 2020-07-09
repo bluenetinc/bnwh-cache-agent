@@ -138,3 +138,4 @@ if ($env:Path -notlike "*$path*"){
       # If $path is not in the environment path variable, add it.
 $env:Path += ";$path"
 }
+
