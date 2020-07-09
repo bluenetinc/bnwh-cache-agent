@@ -163,6 +163,7 @@ Catch{
         if (!$noui){
         $answer=yesorno "Would you like the ActiveDirectory PowerShell module installed on this workstation?" "Missing AD Powershell Module"
         }
+        if ($noui){$answer=$true}
         if ($answer -eq $true){
             AddRegPath "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Servicing"
             Ver-RegistryValue -RegPath "HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\Servicing" -Name "RepairContentServerSource" -DefValue 2 -RegValType "Dword"
