@@ -67,6 +67,20 @@ CATCH {
     if (!$noui -and $osInfo.ProductType -ne 1){
         $answer=yesorno "Would you like the DNS PowerShell module installed on this workstation?" "Missing MS DNS Powershell Module"
         }
+        if ($noui){
+
+                $client = new-object System.Net.WebClient
+                $dwnloaddst = $env:temp+"\WindowsTH-RSAT_WS_1709-x64.msu"
+                $client.DownloadFile("https://download.microsoft.com/download/1/D/8/1D8B5022-5477-4B9A-8104-6A71FF9D98AB/WindowsTH-RSAT_WS_1709-x64.msu",$dwnloaddst)
+                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\installx64.bat"
+                $dfile = $env:temp+"\installx64.bat"
+                Copy-Item -Path $sfile -Destination $dfile
+                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\unattend_x64.xml"
+                $dfile = $env:temp+"\unattend_x64.xml"
+                Copy-Item -Path $sfile -Destination $dfile
+
+
+        }
         if ($answer -eq $true){
         Add-WindowsFeature RSAT-DNS-Server
         }

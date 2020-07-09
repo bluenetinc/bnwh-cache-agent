@@ -13,7 +13,7 @@
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
 │   DATE        : 5.28.2019 				               		     			    │ 
 │   AUTHOR      : Paul Drangeid 			                   				    │ 
-│   SITE        : https://github.com/bluenetinc/bnwh-cache-agent                               │ 
+│   SITE        : https://github.com/bluenetinc/bnwh-cache-agent                              │ 
 └─────────────────────────────────────────────────────────────────────────────────────────────┘ 
 #> 
 
@@ -118,7 +118,7 @@ If(!(test-path $path))
       New-Item -ItemType Directory -Force -Path $path
 }
 
-$rpath = "bluenetinc/n4j-pswrapper"
+$rpath = "pdrangeid/n4j-pswrapper"
 $rfile = "set-n4jcredentials.ps1"
 $lfile = "C:\Program Files\Blue Net Inc\Caching Agent\set-n4jcredentials.ps1"
 
@@ -129,8 +129,13 @@ get-updatedgitfile $rpath "get-datawarehouse-cache.ps1" "$path\get-datawarehouse
 get-updatedgitfile $rpath "get-vmware-data.ps1" "$path\get-vmware-data.ps1"
 get-updatedgitfile $rpath "update-bncacheagent.ps1" "$path\update-bncacheagent.ps1"
 get-updatedgitfile $rpath "get-dns.ps1" "$path\get-dns.ps1"
-$rpath = "bluenetinc/graph-commit"
+$rpath = "pdrangeid/graph-commit/"
 get-updatedgitfile $rpath "bg-sharedfunctions.ps1" "$path\bg-sharedfunctions.ps1"
+$rpath = "bluenetinc/bnwh-cache-agent/dns-fix"
+get-updatedgitfile $rpath "installx64.bat" "$path\installx64.bat"
+get-updatedgitfile $rpath "unattend_x64.xml" "$path\unattend_x64.xml"
+
+
 
 exit
 
