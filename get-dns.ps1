@@ -72,13 +72,14 @@ CATCH {
                 $client = new-object System.Net.WebClient
                 $dwnloaddst = $env:temp+"\WindowsTH-RSAT_WS_1709-x64.msu"
                 $client.DownloadFile("https://download.microsoft.com/download/1/D/8/1D8B5022-5477-4B9A-8104-6A71FF9D98AB/WindowsTH-RSAT_WS_1709-x64.msu",$dwnloaddst)
-                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\installx64.bat"
-                $dfile = $env:temp+"\installx64.bat"
-                Copy-Item -Path $sfile -Destination $dfile
-                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\unattend_x64.xml"
+                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\dns-fix\unattend_x64.xml"
                 $dfile = $env:temp+"\unattend_x64.xml"
                 Copy-Item -Path $sfile -Destination $dfile
-
+                $sfile = "C:\Program Files\Blue Net Inc\Caching Agent\dns-fix\installx64.bat"
+                $dfile = $env:temp+"\installx64.bat"
+                Copy-Item -Path $sfile -Destination $dfile
+                Set-Location $env:temp
+                Invoke-Expression "& `"$dfile`" "
 
         }
         if ($answer -eq $true){
