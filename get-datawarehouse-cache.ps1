@@ -497,7 +497,7 @@ Function Get-ADSIUsers([string]$requpdate){
     
         if ($myuser.ObjectGUID -eq $uguid) {
              if ($null -eq $lstlogon) {[int64]$d1=0} else {[int64]$d1=$lstlogon}
-            if ($null -eq $myuser.LastLogon) {[int64]$d2=0} else {[int64]$d2=$myuser.LastLogon}
+            if ($null -eq $myuser.lastlogon) {[int64]$d2=0} else {[int64]$d2=$myuser.lastlogon}
       			
         if ((get-date $d1) -gt (get-date $d2) ) {
         #write-host "Update the logon time for $($_.Name) from $([datetime]::FromFileTime($myuser.LastLogon)) to $([datetime]::FromFileTime($_.Lastlogon)) because $dcname has a newer time."
