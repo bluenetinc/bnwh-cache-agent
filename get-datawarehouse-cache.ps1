@@ -496,12 +496,13 @@ Function Get-ADSIUsers([string]$requpdate){
         $myuser=$adusers | Where-Object {$_.ObjectGUID -eq $uguid}
     
         if ($myuser.ObjectGUID -eq $uguid) {
-             if ($null -eq $lstlogon) {[int64]$d1=0} else {[int64]$d1=$lstlogon}
+            if ($null -eq $lstlogon) {[int64]$d1=0} else {[int64]$d1=$lstlogon}
             if ($null -eq $myuser.lastlogon) {[int64]$d2=0} else {[int64]$d2=$myuser.lastlogon}
       			
         if ((get-date $d1) -gt (get-date $d2) ) {
-        #write-host "Update the logon time for $($_.Name) from $([datetime]::FromFileTime($myuser.LastLogon)) to $([datetime]::FromFileTime($_.Lastlogon)) because $dcname has a newer time."
-        $myuser.LastLogon=$lstLogon
+        if (!($null -eq $myuser.lastlogindelve)) {$myuser.lastlogindelve=$lstlogon}
+		If ($null -eq $myuser.lastlogindelve){
+		$Myuser | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value $lstlogon -Force}
         }# End LastLogon is newer - let's update!
         }# We found the user in the object list - let's compare LastLogon
     
@@ -513,7 +514,7 @@ Function Get-ADSIUsers([string]$requpdate){
         Name=$_.Name
         userPrincipalname=$_.userPrincipalname
 		ObjectGUID=$_.ObjectGUID
-        LastLogon=$_.LastLogondate
+        lastlogon=$_.LastLogondate
 		physicalDeliveryOfficeName=$_.physicalDeliveryOfficeName
         LastLogoncvt=[datetime]::FromFileTime($_.Lastlogon)
         dc=$dcname
@@ -547,7 +548,6 @@ Function Get-ADSIUsers([string]$requpdate){
         $_ | Add-Member -Name "accountprivilege" -Type NoteProperty -Value "Non privileged account"  -Force
         #$accountType = "Non privileged account"
         }
-        $_ | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value ([datetime]::FromFileTime($_.lastlogon))  -Force
 		$_ | Add-Member -Name "physicalDeliveryOfficeName" -Type NoteProperty -Value $($_.physicalDeliveryOfficeName)  -Force
 		
 
