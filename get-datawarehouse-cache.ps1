@@ -11,12 +11,10 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │ get-datawarehouse-cache.ps1                                                                 │ 
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
-│   DATE        : 9.15.2019 				               									  │ 
+│   DATE        : 6.30.2022				               									  
 │   AUTHOR      : Paul Drangeid 			                   								  │ 
 │   SITE        : https://github.com/pdrangeid/bnwh-cache-agent                               │ 
 │   PARAMETERS  : -subtenant <name of subtenant>    :store settings in subkey for this tenant │ 
-│               : -queryo365                        :Enable Office365/Azure processing        │ 
-│               : -querymwp                         :Enable Managed Workplace processing      │ 
 │               : -noui                             :Disable user interaction (scheduled job) │ 
 │               : -verbosity                        :Level of on-screen messaging (0-4      ) │ 
 │               : -whatif                           :Run, but do NOT submit data to the API   │ 
@@ -25,7 +23,6 @@
 │               : This workstation must be able to run the PS AD Modules                      │ 
 │               : VMware Queries (standalone ESXi host or vCenter):                           │ 
 │               : requires RVTools (https://www.robware.net/rvtools/) v 3.11.6 or newer       │ 
-│               : Office365 Queries:                                                          │ 
 │               : Delegated Administrator credentials and MSOL Powershell module              │ 
 └─────────────────────────────────────────────────────────────────────────────────────────────┘ 
 #> 
@@ -426,138 +423,17 @@ Catch{
     }
 
     function get-o365admin([boolean]$allowpwchange){
-        Add-Type -AssemblyName Microsoft.VisualBasic
-        $Path = "HKCU:\Software\BNCacheAgent\$subtenant\o365"
-        $Path=$path.replace('\\','\')
-        AddRegPath $Path
-        #$result = Get-Set-Credential "Office365" $Path "o365AdminUser" "o365AdminPW" $false "administrator@company.com"
-        Get-Set-Credential "Office365" $Path "o365AdminUser" "o365AdminPW" $false "administrator@company.com"
-        $credUser = Ver-RegistryValue -RegPath $Path -Name "o365AdminUser"
-        $credPwd = Ver-RegistryValue -RegPath $Path -Name "o365AdminPW"
-        $securePwd = ConvertTo-SecureString $credPwd
-        $global:o365cred = New-Object System.Management.Automation.PsCredential($credUser, $securePwd)
-        Try{
-        Connect-MsolService -Credential $o365cred
-        }
-        Catch {
-            write-host "failed to verify credentials and/or connect to the MsolService"
-            Write-Host "returning false"
-            $ErrorMessage=$("Script:$global:srccmdline`nFunction:get-o365admin`nURL:apiURL`nError:$($_.Exception.Message) $($_.Exception.ItemName)")
-            $apiurlparms="?TenantGUID="+$tenantguid+"&DataSourceName=NotApplicable"
-            $apiurl=$apibase+$apiurlparms.replace('+','%2b')
-            write-host "Submitting Error:"
-            $thecontent = (@{"message" = $ErrorMessage} | ConvertTo-Json -Compress)
-            Invoke-RestMethod $apiurl -Method 'Post' -Headers @{"x-api-key"=$APIKey;Accept="application/json";"content-type" = "binary"} -ErrorVariable RestError  -Body $thecontent -ErrorAction SilentlyContinue -TimeoutSec 900 
-            return $false
-        }
-        Write-Host "returning true"
-        return $true
     }#End Function (get-o365admin)
 
     Function get-addns([string]$objclass){
         $ErrorActionPreference = 'Stop'
     }
-    Function get-mwp-assets([string]$objclass){
-        $ErrorActionPreference = 'Stop'
-        
-        if ($objclass -like '*Site'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Site"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*Device'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Device"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*Enclosure'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Win32_SystemEnclosure?$filter=not(ChassisTypes%20eq%20'')"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*IPAddress'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/IPAddress?$filter=not(MACAddress%20eq%20'')"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*OS'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Win32_OperatingSystem"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*Bios'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Win32_Bios"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*System'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/Win32_ComputerSystem"
-            $apidata= get-webapi-query $mwpurl
-        }
-        if ($objclass -like '*Patch'){
-            $mwpurl="https://us03.mw-rmm.barracudamsp.com/OData/v1/PatchData"
-            $apidata= get-webapi-query $mwpurl
-        }
-        
-        $ic = [int]($apidata | measure-object).count
-        write-host "$ic results received for $objclass"
-        #$ScheduledJobName = "Blue Net Warehouse MWP Data Refresh"
-        #Remove-Variable -name Response | Out-Null
-        return  $($apidata)
-
-    }# End Function get-mwp-assets
-
+    
     Function get-o365-assets([string]$objclass){
-        Write-host "getting o365 assets"
-            $ErrorActionPreference = 'Stop'
-        $Path = "HKCU:\Software\BNCacheAgent\$subtenant\o365"
-        $Path = $Path.replace('\\','\')
-        write-host "Delegated Admin is $O365Delegated"
-            Write-Host "Using supplied authentication credentials"
-            Write-Host "Using supplied authentication username:"$o365cred.username
-            Connect-MsolService -Credential $o365cred
-            write-host "The objclass is $objclass"
-
-            if ($objclass -like '*user'){
-            $o365results=(Get-MsolUser | Select-Object * )
-            }
-
-            elseif ($objclass -like '*device'){
-                $o365results=(Get-MsolDevice -All | Select-Object *)
-            }
-    
-            elseif ($objclass -like '*contact'){
-                $o365results=(Get-MsolContact -All | Select-Object *)
-            }
-    
-            elseif ($objclass -like '*accountsku'){
-                $o365results=(Get-MsolAccountSku | Select-Object *)
-            }
-
-            elseif ($objclass -like '*group'){
-                $o365results=(Get-MsolGroup | Select-Object *)
-            }
-
-            elseif ($objclass -like '*licensetype'){
-                $o365results=(Get-MsolUser -All | Select-object DisplayName,userPrincipalname,isLicensed,BlockCredential,ValidationStatus,@{n="Licenses Type";e={$_.Licenses.AccountSKUid}})
-            }
-
-            elseif ($objclass -like '*mailbox'){
-                $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $o365cred -Authentication  Basic -AllowRedirection
-                Import-PSSession $Session -DisableNameChecking
-                #$o365results=(Get-MsolUser -All | Where-Object {$_.IsLicensed -eq $true -and $_.BlockCredential -eq $false} | Select-Object UserPrincipalName | ForEach-Object {Get-Mailbox -Identity $_.UserPrincipalName | Where-Object {$_.WhenChangedUTC -ge $tenantlastupdate} | Select-Object *})
-                $o365results=(Get-Mailbox | Where-Object {$_.WhenChangedUTC -ge $tenantlastupdate} | Select-Object *)
-                Remove-PSSession $Session
-            }
-
-            else {
-                write-host "We saw something we didn't quite expect..."
-                write-host "request for $objclass"
-                return
-            }
-
-            $ic = [int]($o365results | -object).count
-            Show-onscreen $("$ic items returned for $objclass") 2
-            return  $($o365results)
         }
-Function get-mailprotector(){
-}
 
-Function Get-LastLogon([string]$requpdate){
+Function Get-ADSIUsers([string]$requpdate){
+	WRITE-Host "****************************************************************GETTING NEW METHOD ADSIUSERS ****************************************************************"
     $CvtDate = (Get-Date $requpdate).ToFileTime()
     $adusers = @()
     $Path = "HKCU:\Software\BNCacheAgent\"
@@ -582,8 +458,8 @@ Function Get-LastLogon([string]$requpdate){
     Try{
     if (![string]::IsNullOrEmpty($mysearchbase)){
         $arrsb=@($mysearchbase -split '\r?\n')# If the regvalue was multi-line we need to split it into multiple searchbase entries
-        $adresults=($arrsb | ForEach-object {get-aduser -server $dcname -Searchbase $_ -Filter $myfilter -Properties lastlogon,name,objectguid -ErrorAction SilentlyContinue | Select-Object lastlogon,objectguid,name | Where-object {$_.lastlogon -ge $CvtDate}})
-
+        $adresults=($arrsb | ForEach-object {get-aduser -server $dcname -Searchbase $_ -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastlogon -ge $CvtDate }})
+	
         ForEach ($sb in $arrsb){
         show-onscreen $("{get-aduser -server $dcname -Searchbase $sb -Filter $myfilter -Properties lastlogon,objectguid,name -ErrorAction SilentlyContinue | select lastlogon,objectguid,name | Where-object {_.lastlogondate -ge $requpdate}") 4
         }
@@ -591,8 +467,9 @@ Function Get-LastLogon([string]$requpdate){
         }#We have a custom searchbase
     else {
         #Show-onscreen $("AD Query: Get-ADObject -resultpagesize 50 -server $dcname -Filter $myfilter -Properties LastLogon,Modified -ErrorAction SilentlyContinue | Where-object {$_.lastlogondate -lt $requpdate}") 2
-        $adresults = get-aduser -server $dcname -Filter $myfilter -Properties lastlogon,name,objectguid -ErrorAction SilentlyContinue | Select-Object lastlogon,objectguid,name | Where-object {$_.lastlogon -ge $CvtDate}
+        $adresults = get-aduser -server $dcname -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastlogon -ge $CvtDate }
         }# No custom searchbase
+		Show-onscreen $("We retrieved $($adresults.count) that matched the filter") 2
     }#End Try
 
     Catch{
@@ -616,34 +493,66 @@ Function Get-LastLogon([string]$requpdate){
     $adresults | foreach-object {
         $uguid=$_.ObjectGUID
         $lstlogon=$_.LastLogon
-        #write-host "Let's see if we can find a user with a guid of $uguid"
         $myuser=$adusers | Where-Object {$_.ObjectGUID -eq $uguid}
     
-        #Write-Host "myuser guid is $($myuser.ObjectGUID)"
-        #Write-Host " and uguid is $uguid"
         if ($myuser.ObjectGUID -eq $uguid) {
-            #Write-Host "Found $uguid and let's see if this DC LL $($_.LastLogondate) is newer than the stored value of $($myuser.LastLogondate) "
-        if ($lstlogon -gt $myuser.LastLogon ) {
-        write-host "Update the logon time for $($_.Name) from $($myuser.LastLogoncvt) to $([datetime]::FromFileTime($_.Lastlogon)) because $dcname has a newer time."
+             if ($null -eq $lstlogon) {[int64]$d1=0} else {[int64]$d1=$lstlogon}
+            if ($null -eq $myuser.LastLogon) {[int64]$d2=0} else {[int64]$d2=$myuser.LastLogon}
+      			
+        if ((get-date $d1) -gt (get-date $d2) ) {
+        #write-host "Update the logon time for $($_.Name) from $([datetime]::FromFileTime($myuser.LastLogon)) to $([datetime]::FromFileTime($_.Lastlogon)) because $dcname has a newer time."
         $myuser.LastLogon=$lstLogon
-        $myuser.LastLogoncvt=[datetime]::FromFileTime($lstLogon)
         }# End LastLogon is newer - let's update!
         }# We found the user in the object list - let's compare LastLogon
     
     If (!($myuser)) {
     Show-onscreen $("Collecting logon information for $($_.name)") 4
-    $adusers  += [pscustomobject]@{
+   $adusers  += $_
+
+<#   $adusers  += [pscustomobject]@{
         Name=$_.Name
-        ObjectGUID=$_.ObjectGUID
+        userPrincipalname=$_.userPrincipalname
+		ObjectGUID=$_.ObjectGUID
         LastLogon=$_.LastLogondate
+		physicalDeliveryOfficeName=$_.physicalDeliveryOfficeName
         LastLogoncvt=[datetime]::FromFileTime($_.Lastlogon)
         dc=$dcname
-    }
+    }#>
     
     }# End if user missing from array
     }# Next $users object
 
     }# Next Domain Controller
+	
+	#Add Privilege property to each user based on group membership
+    $adusers | ForEach-Object {
+	
+        If($_.MemberOf -like "*Domain Admin*" -or $_.MemberOf -like "*Administrators*" -or $_.MemberOf -like "*Enterprise Admin*" -or $_.MemberOf -like "*Schema Admin*")
+        {
+        #$accountType = "High Privilege Account"
+        $_ | Add-Member -Name "accountprivilege" -Type NoteProperty -Value "High Privilege Account" -Force
+        }
+        elseIf($_.MemberOf -like "*server operator*" -or $_.MemberOf -like "*backup operator*" -or $_.MemberOf -like "*admin*")
+        {
+        $_ | Add-Member -Name "accountprivilege" -Type NoteProperty -Value "Limited Privilege Account"  -Force
+        #$accountType = "Limited Privilege Account"
+        }
+        elseIf($_.Description -like "Built-in*")
+        {
+        $_ | Add-Member -Name "accountprivilege" -Type NoteProperty -Value "System Account"  -Force
+        #$accountType = "System Account"
+        }
+        else
+        {
+        $_ | Add-Member -Name "accountprivilege" -Type NoteProperty -Value "Non privileged account"  -Force
+        #$accountType = "Non privileged account"
+        }
+        $_ | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value ([datetime]::FromFileTime($_.lastlogon))  -Force
+		$_ | Add-Member -Name "physicalDeliveryOfficeName" -Type NoteProperty -Value $($_.physicalDeliveryOfficeName)  -Force
+		
+
+    }# End ForEach-Object
+		
     Show-onscreen $("We received $($adusers.count) User LastLogon updates to submit to the API.") 1
     $ic = [int]($adusers | measure-object).count
     if ($ic -eq 0) {
@@ -654,8 +563,9 @@ Function Get-LastLogon([string]$requpdate){
     $adoutput = $adusers | select-object $allProperties 
     }#We had at least 1 result in $ic
     write-host "cache data is "$adoutput
-    submit-cachedata $adoutput "ADSI-lastlogon"
-} # End Function Get-LastLogon
+    submit-cachedata $adoutput "ADSI-user"
+} # End Function Get-ADSIUser
+
 Function get-filteredadobject([string]$ADObjclass,[string]$requpdate){
     $ErrorActionPreference = 'stop'
     $DefDate = 	[datetime]"4/25/1980 10:05:50 PM"
@@ -934,11 +844,15 @@ if (!$SourceReqUpdate){
     $Source=$_.SourceName.replace('ADSI-','')
     Show-onscreen $("Request for Active Directory $Source data from $ModDate or later.") 3
     $ErrorActionPreference = 'Stop'
-    if (!($Source -like "*lastlogon*")){
+    if (!($Source -like "*lastlogon*" -or $Source -like "*user*" )){
     $intresult=(get-filteredadobject $($Source) $($ModDate))
     }
     if ($Source -like "*lastlogon*"){
-        $intresult=(get-lastlogon $($ModDate))
+        #$intresult=(get-lastlogon $($ModDate)) Just skip it!
+        }
+	if ($Source -like "*user*"){
+		Show-onscreen $($_.SourceName+"Next Update requested at/after [$DueDate] with a MaxAge of $MaxAge.  Get any data after [$Moddate]") 2
+        $intresult=(Get-ADSIUsers $($ModDate))
         }
     Show-onscreen $("$intresult items returned") 2
     }# end if (ADSI source request)
@@ -1022,6 +936,8 @@ elseif ($_.SourceName -like "ms-dns"){
   $scriptpath = "$PSScriptRoot\get-dns.ps1"
   if ($noui) {$dnsresult = . $scriptpath -api -noui}
   if (!$noui) {$dnsresult = . $scriptpath -api}
+  
+  write-host "The DNS result is $dnsresult"
   
     if (!([string]::IsNullOrEmpty($dnsresult).fullname)){
         #Now take the resulting export files and submit to the cache ingester:

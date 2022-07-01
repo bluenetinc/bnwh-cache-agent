@@ -11,7 +11,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │ update-bncacheagent.ps1                                                                     │ 
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
-│   DATE        : 5.28.2019 				               		     			    │ 
+│   DATE        : 7.1.2022 				               		     			    │ 
 │   AUTHOR      : Paul Drangeid 			                   				    │ 
 │   SITE        : https://github.com/bluenetinc/bnwh-cache-agent                              │ 
 └─────────────────────────────────────────────────────────────────────────────────────────────┘ 
@@ -44,7 +44,7 @@ Function get-updatedgitfile([string]$reponame,[string]$repofile,[string]$localfi
       # NOTE: unauthentication API queries to github (like this one) are rate-limited to 60 per hour (per IP address)
       # So be sure you are only checking for a few files, and if it is a scheduled job, be sure you won't exceed this limit.
       # You could add authenitcation to this function to avoid the 60/hr rate limitation.
-
+write-host "we're gonna check $reponame for $repofile vs local $localfilename"
       $githuburl="https://api.github.com/repos/$reponame/commits?path=$repofile&page1&per_page=1"
       Try{
             $Restresult=(Invoke-RestMethod $githuburl -Method 'Get' -Headers @{Accept = "application/json"} -ErrorVariable RestError -ErrorAction SilentlyContinue -TimeoutSec 30)
@@ -64,8 +64,11 @@ Function get-updatedgitfile([string]$reponame,[string]$repofile,[string]$localfi
                   return $false
       }
       #Get the date of the last commit for the repository file requested.
+      
       [datetime]$therepofiledate=$Restresult.commit[0].author.date | get-date -Format "yyyy-MM-ddTHH:mm:ss"
+      write-host "We got a repofile date of $therepofiledate for $repofile"
       If (Test-Path -path $localfilename) {
+      
             $lastModifiedDate = (Get-Item $localfilename).LastWriteTime | get-date -Format "yyyy-MM-ddTHH:mm:ss"
             $localfiletime = ConvertUTC $lastModifiedDate $localtz
       if ($localfiletime -ge $therepofiledate){
@@ -118,6 +121,11 @@ If(!(test-path $path))
       New-Item -ItemType Directory -Force -Path $path
 }
 
+if ([Environment]::Is64BitProcess -eq $false){
+      Write-Warning "You must run this script using the x64 Windows PowerShell with Administrator privilleges"
+      exit
+}
+
 $rpath = "pdrangeid/n4j-pswrapper"
 $rfile = "set-n4jcredentials.ps1"
 $lfile = "C:\Program Files\Blue Net Inc\Caching Agent\set-n4jcredentials.ps1"
@@ -129,18 +137,13 @@ get-updatedgitfile $rpath "get-datawarehouse-cache.ps1" "$path\get-datawarehouse
 get-updatedgitfile $rpath "get-vmware-data.ps1" "$path\get-vmware-data.ps1"
 get-updatedgitfile $rpath "update-bncacheagent.ps1" "$path\update-bncacheagent.ps1"
 get-updatedgitfile $rpath "get-dns.ps1" "$path\get-dns.ps1"
-$rpath = "pdrangeid/graph-commit/"
+$rpath = "pdrangeid/graph-commit"
 get-updatedgitfile $rpath "bg-sharedfunctions.ps1" "$path\bg-sharedfunctions.ps1"
-$rpath = "bluenetinc/bnwh-cache-agent/dns-fix"
-get-updatedgitfile $rpath "installx64.bat" "$path\installx64.bat"
-get-updatedgitfile $rpath "unattend_x64.xml" "$path\unattend_x64.xml"
-
-
 
 exit
+
 
 if ($env:Path -notlike "*$path*"){
       # If $path is not in the environment path variable, add it.
 $env:Path += ";$path"
 }
-
