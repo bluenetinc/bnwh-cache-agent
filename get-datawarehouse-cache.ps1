@@ -492,7 +492,7 @@ Function Get-ADSIUsers([string]$requpdate){
     write-host "we got $($adresults.count) users"
     $adresults | foreach-object {
         $uguid=$_.ObjectGUID
-        $lstlogon=$_.LastLogon
+        $lstlogon=$_.lastlogon
         $myuser=$adusers | Where-Object {$_.ObjectGUID -eq $uguid}
     
         if ($myuser.ObjectGUID -eq $uguid) {
