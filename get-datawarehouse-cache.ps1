@@ -11,7 +11,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │ get-datawarehouse-cache.ps1                                                                 │ 
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
-│   DATE        : 6.30.2022				               									  
+│   DATE        : 7.04.2022				               									  
 │   AUTHOR      : Paul Drangeid 			                   								  │ 
 │   SITE        : https://github.com/pdrangeid/bnwh-cache-agent                               │ 
 │   PARAMETERS  : -subtenant <name of subtenant>    :store settings in subkey for this tenant │ 
