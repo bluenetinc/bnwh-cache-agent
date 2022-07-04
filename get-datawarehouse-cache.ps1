@@ -549,7 +549,7 @@ Function Get-ADSIUsers([string]$requpdate){
         #$accountType = "Non privileged account"
         }
 		$_ | Add-Member -Name "physicalDeliveryOfficeName" -Type NoteProperty -Value $($_.physicalDeliveryOfficeName)  -Force
-		
+		$_ | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value $($_.lastlogindelve)  -Force
 
     }# End ForEach-Object
 		
