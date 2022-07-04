@@ -500,9 +500,14 @@ Function Get-ADSIUsers([string]$requpdate){
             if ($null -eq $myuser.lastlogon) {[int64]$d2=0} else {[int64]$d2=$myuser.lastlogon}
       			
         if ((get-date $d1) -gt (get-date $d2) ) {
+        if (!($null -eq $myuser.lastlogon)) {$myuser.lastlogon=$lstlogon}
         if (!($null -eq $myuser.lastlogindelve)) {$myuser.lastlogindelve=$lstlogon}
-		If ($null -eq $myuser.lastlogindelve){
-		$Myuser | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value $lstlogon -Force}
+
+        If ($null -eq $myuser.lastlogindelve){
+        $Myuser | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value $lstlogon -Force}
+        If ($null -eq $myuser.lastlogon){
+            $Myuser | Add-Member -Name "lastlogon" -Type NoteProperty -Value $lstlogon -Force}
+            
         }# End LastLogon is newer - let's update!
         }# We found the user in the object list - let's compare LastLogon
     
