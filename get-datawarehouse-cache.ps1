@@ -11,7 +11,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │ get-datawarehouse-cache.ps1                                                                 │ 
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤ 
-│   DATE        : 7.04.2022				               									  
+│   DATE        : 7.05.2022				               					                      |
 │   AUTHOR      : Paul Drangeid 			                   								  │ 
 │   SITE        : https://github.com/pdrangeid/bnwh-cache-agent                               │ 
 │   PARAMETERS  : -subtenant <name of subtenant>    :store settings in subkey for this tenant │ 
@@ -458,16 +458,16 @@ Function Get-ADSIUsers([string]$requpdate){
     Try{
     if (![string]::IsNullOrEmpty($mysearchbase)){
         $arrsb=@($mysearchbase -split '\r?\n')# If the regvalue was multi-line we need to split it into multiple searchbase entries
-        $adresults=($arrsb | ForEach-object {get-aduser -server $dcname -Searchbase $_ -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastlogon -ge $CvtDate }})
+        $adresults=($arrsb | ForEach-object {get-aduser -server $dcname -Searchbase $_ -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastLogon -ge $CvtDate }})
 	
         ForEach ($sb in $arrsb){
-        show-onscreen $("{get-aduser -server $dcname -Searchbase $sb -Filter $myfilter -Properties lastlogon,objectguid,name -ErrorAction SilentlyContinue | select lastlogon,objectguid,name | Where-object {_.lastlogondate -ge $requpdate}") 4
+        show-onscreen $("{get-aduser -server $dcname -Searchbase $sb -Filter $myfilter -Properties lastLogon,objectguid,name -ErrorAction SilentlyContinue | select lastLogon,objectguid,name | Where-object {_.lastLogondate -ge $requpdate}") 4
         }
         
         }#We have a custom searchbase
     else {
-        #Show-onscreen $("AD Query: Get-ADObject -resultpagesize 50 -server $dcname -Filter $myfilter -Properties LastLogon,Modified -ErrorAction SilentlyContinue | Where-object {$_.lastlogondate -lt $requpdate}") 2
-        $adresults = get-aduser -server $dcname -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastlogon -ge $CvtDate }
+        #Show-onscreen $("AD Query: Get-ADObject -resultpagesize 50 -server $dcname -Filter $myfilter -Properties lastLogon,Modified -ErrorAction SilentlyContinue | Where-object {$_.lastLogondate -lt $requpdate}") 2
+        $adresults = get-aduser -server $dcname -Filter $myfilter -Properties * -ErrorAction SilentlyContinue | Select-Object * | Where-object {$_.Modified -ge $requpdate -or $_.lastLogon -ge $CvtDate }
         }# No custom searchbase
 		Show-onscreen $("We retrieved $($adresults.count) that matched the filter") 2
     }#End Try
@@ -492,24 +492,24 @@ Function Get-ADSIUsers([string]$requpdate){
     write-host "we got $($adresults.count) users"
     $adresults | foreach-object {
         $uguid=$_.ObjectGUID
-        $lstlogon=$_.lastlogon
+        $lstlogon=$_.lastLogon
         $myuser=$adusers | Where-Object {$_.ObjectGUID -eq $uguid}
     
         if ($myuser.ObjectGUID -eq $uguid) {
             if ($null -eq $lstlogon) {[int64]$d1=0} else {[int64]$d1=$lstlogon}
-            if ($null -eq $myuser.lastlogon) {[int64]$d2=0} else {[int64]$d2=$myuser.lastlogon}
+            if ($null -eq $myuser.lastLogon) {[int64]$d2=0} else {[int64]$d2=$myuser.lastLogon}
       			
         if ((get-date $d1) -gt (get-date $d2) ) {
-        if (!($null -eq $myuser.lastlogon)) {$myuser.lastlogon=$lstlogon}
+        if (!($null -eq $myuser.lastLogon)) {$myuser.lastLogon=$lstlogon}
         if (!($null -eq $myuser.lastlogindelve)) {$myuser.lastlogindelve=$lstlogon}
 
         If ($null -eq $myuser.lastlogindelve){
         $Myuser | Add-Member -Name "lastlogindelve" -Type NoteProperty -Value $lstlogon -Force}
-        If ($null -eq $myuser.lastlogon){
-            $Myuser | Add-Member -Name "lastlogon" -Type NoteProperty -Value $lstlogon -Force}
+        If ($null -eq $myuser.lastLogon){
+            $Myuser | Add-Member -Name "lastLogon" -Type NoteProperty -Value $lstlogon -Force}
             
-        }# End LastLogon is newer - let's update!
-        }# We found the user in the object list - let's compare LastLogon
+        }# End lastLogon is newer - let's update!
+        }# We found the user in the object list - let's compare lastLogon
     
     If (!($myuser)) {
     Show-onscreen $("Collecting logon information for $($_.name)") 4
@@ -519,9 +519,9 @@ Function Get-ADSIUsers([string]$requpdate){
         Name=$_.Name
         userPrincipalname=$_.userPrincipalname
 		ObjectGUID=$_.ObjectGUID
-        lastlogon=$_.LastLogondate
+        lastLogon=$_.lastLogondate
 		physicalDeliveryOfficeName=$_.physicalDeliveryOfficeName
-        LastLogoncvt=[datetime]::FromFileTime($_.Lastlogon)
+        lastLogoncvt=[datetime]::FromFileTime($_.lastLogon)
         dc=$dcname
     }#>
     
@@ -558,7 +558,7 @@ Function Get-ADSIUsers([string]$requpdate){
 
     }# End ForEach-Object
 		
-    Show-onscreen $("We received $($adusers.count) User LastLogon updates to submit to the API.") 1
+    Show-onscreen $("We received $($adusers.count) User lastLogon updates to submit to the API.") 1
     $ic = [int]($adusers | measure-object).count
     if ($ic -eq 0) {
     $adoutput = "Zero"
@@ -849,11 +849,11 @@ if (!$SourceReqUpdate){
     $Source=$_.SourceName.replace('ADSI-','')
     Show-onscreen $("Request for Active Directory $Source data from $ModDate or later.") 3
     $ErrorActionPreference = 'Stop'
-    if (!($Source -like "*lastlogon*" -or $Source -like "*user*" )){
+    if (!($Source -like "*lastLogon*" -or $Source -like "*user*" )){
     $intresult=(get-filteredadobject $($Source) $($ModDate))
     }
-    if ($Source -like "*lastlogon*"){
-        #$intresult=(get-lastlogon $($ModDate)) Just skip it!
+    if ($Source -like "*lastLogon*"){
+        #$intresult=(get-lastLogon $($ModDate)) Just skip it!
         }
 	if ($Source -like "*user*"){
 		Show-onscreen $($_.SourceName+"Next Update requested at/after [$DueDate] with a MaxAge of $MaxAge.  Get any data after [$Moddate]") 2
